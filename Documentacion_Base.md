@@ -78,6 +78,7 @@ SQL es un lenguaje de dominio específico para consultar y manipular bases de da
 
 | N° | Nombre | Rol |
 |---|---|---|
-| 1 | ... | ... |
-| 2 | ... | ... |
-| 3 | ... | ... |
+| 1 | Dino Paul Roel Suazo Zanabria | ... |
+| 2 | Farid Paolo Zamudio Sanchez | ... |
+| 3 | Luis Angel Vargas Ponce | ... |
+| 4 | Yazid Elio Fernandez Dueñas | ... |
