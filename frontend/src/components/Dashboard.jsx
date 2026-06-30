@@ -1,8 +1,12 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import QueryBuilder from './QueryBuilder';
 import ResultsTable from './ResultsTable';
 import ChartView from './ChartView';
 import ExportButtons from './ExportButtons';
+import StatsCards from './StatsCards';
+import QueryHistory, { saveToHistory, getHistory } from './QueryHistory';
+import ProductForm from './ProductForm';
+import { executeQuery } from '../services/api';
 
 export default function Dashboard({ user, onLogout }) {
   const [results, setResults] = useState(null);
@@ -10,15 +14,43 @@ export default function Dashboard({ user, onLogout }) {
   const [activeTab, setActiveTab] = useState('table');
   const [chartType, setChartType] = useState('bar');
   const [loading, setLoading] = useState(false);
+  const [statsKey, setStatsKey] = useState(0);
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [history, setHistory] = useState(getHistory);
+  const sqlRef = useRef('');
 
-  const handleQueryResult = useCallback((data) => {
+  const handleQueryResult = useCallback((data, executedSql) => {
     setResults(data);
     setLoading(false);
+    const querySql = executedSql || sqlRef.current;
+    if (querySql && data.success !== false) {
+      saveToHistory(querySql, data.rowCount ?? data.rows?.length);
+      setHistory(getHistory());
+    }
   }, []);
 
   const handleSQLGenerated = useCallback((generatedSql) => {
     setSql(generatedSql);
+    sqlRef.current = generatedSql;
   }, []);
+
+  const handleReplayQuery = useCallback(async (replaySql) => {
+    setLoading(true);
+    setActiveTab('table');
+    try {
+      const result = await executeQuery(replaySql);
+      setResults(result);
+      saveToHistory(replaySql, result.rowCount ?? result.rows?.length);
+      setHistory(getHistory());
+    } catch (_) {
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleProductAdded = () => {
+    setStatsKey(k => k + 1);
+  };
 
   const rows = results?.rows || [];
   const columns = results?.columns || [];
@@ -34,6 +66,11 @@ export default function Dashboard({ user, onLogout }) {
           </span>
         </div>
         <div className="navbar-right">
+          {user.role === 'admin' && (
+            <button className="btn btn-success btn-sm" onClick={() => setShowProductForm(true)}>
+              + Agregar Producto
+            </button>
+          )}
           <div className="user-info">
             <span style={{ color: 'var(--text-secondary)' }}>Usuario:</span>
             <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{user.username}</span>
@@ -46,8 +83,9 @@ export default function Dashboard({ user, onLogout }) {
       </nav>
 
       <div className="main-content">
+        <StatsCards refreshKey={statsKey} />
+
         <div className="dashboard-layout">
-          {/* Left: Query Builder */}
           <div className="dashboard-left">
             <QueryBuilder
               onQueryResult={handleQueryResult}
@@ -56,8 +94,7 @@ export default function Dashboard({ user, onLogout }) {
             />
           </div>
 
-          {/* Right: Results */}
-          <div>
+          <div className="dashboard-right">
             <div className="card results-section">
               <div className="section-header">
                 <div className="section-title">Resultados</div>
@@ -104,9 +141,18 @@ export default function Dashboard({ user, onLogout }) {
                 </div>
               )}
             </div>
+
+            <QueryHistory history={history} onReplay={handleReplayQuery} />
           </div>
         </div>
       </div>
+
+      {showProductForm && (
+        <ProductForm
+          onClose={() => setShowProductForm(false)}
+          onSuccess={handleProductAdded}
+        />
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ const cors = require('cors');
 const { initDB } = require('./db');
 const authRoutes = require('./routes/auth');
 const queryRoutes = require('./routes/query');
+const productsRoutes = require('./routes/products');
 
 const app = express();
 const PORT = 3001;
@@ -16,6 +17,7 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/query', queryRoutes);
+app.use('/api/products', productsRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

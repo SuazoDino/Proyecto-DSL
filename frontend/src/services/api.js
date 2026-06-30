@@ -32,4 +32,10 @@ export const executeQuery = (sql) =>
 export const buildQuery = (descriptor) =>
   api.post('/query/build', descriptor).then(r => r.data);
 
+export const getStats = () =>
+  api.get('/query/stats').then(r => r.data);
+
+export const addProduct = (data) =>
+  api.post('/products', data).then(r => r.data);
+
 export default api;

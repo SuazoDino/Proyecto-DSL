@@ -73,7 +73,7 @@ export default function QueryBuilder({ onQueryResult, onSQLGenerated, userRole }
     setExecuting(true);
     try {
       const result = await executeQuery(sql);
-      onQueryResult(result);
+      onQueryResult(result, sql);
     } catch (err) {
       const msg = err.response?.data?.error || 'Error al ejecutar la consulta';
       setExecError(msg);

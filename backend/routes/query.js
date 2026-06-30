@@ -47,6 +47,20 @@ router.get('/schema', (req, res) => {
   res.json(SCHEMA);
 });
 
+router.get('/stats', (req, res) => {
+  try {
+    const totalProductos = db.prepare('SELECT COUNT(*) as c FROM productos').get().c;
+    const valorRow = db.prepare('SELECT SUM(precio * stock) as total FROM productos').get();
+    const valorTotal = valorRow.total || 0;
+    const totalCategorias = db.prepare('SELECT COUNT(DISTINCT categoria) as c FROM productos').get().c;
+    const stockBajo = db.prepare('SELECT COUNT(*) as c FROM productos WHERE stock < 10').get().c;
+    const topCatRow = db.prepare('SELECT categoria, COUNT(*) as c FROM productos GROUP BY categoria ORDER BY c DESC LIMIT 1').get();
+    res.json({ totalProductos, valorTotal, totalCategorias, stockBajo, topCategoria: topCatRow?.categoria || '-' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/categories', (req, res) => {
   try {
     const rows = db.prepare('SELECT DISTINCT categoria FROM productos ORDER BY categoria').all();
